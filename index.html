@@ -3,21 +3,23 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f7f9fc">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <title>阅读嘉年华摊位地图</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=ZCOOL+KuaiLe&family=IBM+Plex+Mono:wght@500;600&display=swap">
 <style>
-  /* Layout: hall floor plan as the hero (stage on the left, booths in a 9-column grid, counters on the right), stall detail beside it, filterable directory below. */
+  /* Layout: floor plan in the centre, tick-off checklist on its right (stacks below on narrow screens), stall directory underneath. Light theme only. */
   :root {
-    --bg: #f3f5f8;
+    color-scheme: light;
+    --bg: #f7f9fc;
     --surface: #ffffff;
-    --floor: #e9edf3;
-    --line: #d3d9e3;
+    --floor: #eef2f7;
+    --line: #d8dee8;
     --fg: #1b2433;
     --muted: #5d6879;
     --ink: #24407a;
-    --ink-soft: #e3e9f6;
     --red: #d1453b;     --red-bg: #fdecea;
     --yellow: #b77900;  --yellow-bg: #fff4d6;
     --blue: #1f6fc4;    --blue-bg: #e4f0fc;
@@ -29,99 +31,83 @@
     --font-body: "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
     --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
   }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --bg: #11161f; --surface: #19202c; --floor: #141a24; --line: #2c3545;
-      --fg: #e6ebf3; --muted: #9aa5b6; --ink: #9db8f0; --ink-soft: #243150;
-      --red: #f0776d; --red-bg: #3a1f1d; --yellow: #f0bb4a; --yellow-bg: #3a2e14;
-      --blue: #6eaef0; --blue-bg: #17293f; --green: #6cc98a; --green-bg: #163222;
-      --stage: #1d2b40; --counter: #3d2a19; --counter-fg: #f5b27a; --done: #6cc98a;
-      color-scheme: dark;
-    }
-  }
-  :root[data-theme="dark"] {
-    --bg: #11161f; --surface: #19202c; --floor: #141a24; --line: #2c3545;
-    --fg: #e6ebf3; --muted: #9aa5b6; --ink: #9db8f0; --ink-soft: #243150;
-    --red: #f0776d; --red-bg: #3a1f1d; --yellow: #f0bb4a; --yellow-bg: #3a2e14;
-    --blue: #6eaef0; --blue-bg: #17293f; --green: #6cc98a; --green-bg: #163222;
-    --stage: #1d2b40; --counter: #3d2a19; --counter-fg: #f5b27a; --done: #6cc98a;
-    color-scheme: dark;
-  }
 
   * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
   body {
     margin: 0;
     background: var(--bg); color: var(--fg);
     font-family: var(--font-body); font-size: 15px; line-height: 1.6;
-    padding-block: 20px 48px;
+    padding-block: max(16px, env(safe-area-inset-top, 0px)) max(40px, env(safe-area-inset-bottom, 0px));
     padding-left: max(16px, env(safe-area-inset-left, 0px));
     padding-right: max(16px, env(safe-area-inset-right, 0px));
+    -webkit-tap-highlight-color: transparent;
   }
-  .wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 20px; }
-  button { font: inherit; color: inherit; }
+  .wrap { max-width: 1240px; margin: 0 auto; display: grid; gap: 16px; }
+  button { font: inherit; color: inherit; touch-action: manipulation; }
   :focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 
   /* Header */
   header { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; }
-  .eyebrow { font-size: 12px; letter-spacing: .08em; color: var(--muted); font-weight: 500; text-transform: uppercase; }
-  h1 { font-family: var(--font-display); font-weight: 400; font-size: clamp(28px, 5vw, 40px); line-height: 1.15; margin: 2px 0 0; text-wrap: balance; color: var(--ink); }
+  .eyebrow { font-size: 12px; letter-spacing: .08em; color: var(--muted); font-weight: 500; }
+  h1 { font-family: var(--font-display); font-weight: 400; font-size: clamp(28px, 4.5vw, 40px); line-height: 1.15; margin: 2px 0 0; text-wrap: balance; color: var(--ink); }
   .when { color: var(--muted); font-size: 14px; margin-top: 4px; }
   .progress { display: flex; align-items: center; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; }
   .progress-ring { width: 44px; height: 44px; flex: none; }
   .progress b { font-size: 20px; font-variant-numeric: tabular-nums; }
   .progress small { display: block; color: var(--muted); font-size: 12px; line-height: 1.3; }
-  .link-btn { background: none; border: 0; padding: 0; color: var(--muted); font-size: 12px; text-decoration: underline; cursor: pointer; }
 
   /* Controls */
-  .controls { display: grid; gap: 10px; }
-  .search { position: relative; }
+  .controls { display: grid; gap: 8px; }
+  .search { position: relative; display: block; }
   .search input {
-    width: 100%; font: inherit; font-size: 15px; color: var(--fg);
+    width: 100%; font: inherit; font-size: 16px; color: var(--fg); -webkit-appearance: none; appearance: none;
     background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
     padding: 10px 12px 10px 38px;
   }
   .search svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; stroke: var(--muted); fill: none; }
-  .chip-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-  .chip-row .lbl { font-size: 12px; color: var(--muted); margin-right: 4px; letter-spacing: .04em; }
+  .chip-row { display: flex; gap: 6px; align-items: center; overflow-x: auto; scrollbar-width: none; padding-block: 2px; }
+  .chip-row::-webkit-scrollbar { display: none; }
+  .chip-row .lbl { font-size: 12px; color: var(--muted); margin-right: 4px; letter-spacing: .04em; flex: none; }
   .chip {
-    border: 1px solid var(--line); background: var(--surface); border-radius: 999px;
-    padding: 4px 12px; font-size: 13px; cursor: pointer; white-space: nowrap;
+    flex: none; border: 1px solid var(--line); background: var(--surface); border-radius: 999px;
+    min-height: 36px; padding: 4px 14px; font-size: 14px; cursor: pointer; white-space: nowrap;
   }
-  .chip:hover { border-color: var(--ink); }
-  .chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--surface); }
+  .chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
 
-  /* Map + detail */
-  .main { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 20px; align-items: start; }
-  @media (max-width: 960px) { .main { grid-template-columns: minmax(0, 1fr); } }
-  .map-card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; min-width: 0; }
-  .map-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+  /* Main: map + right-hand panel */
+  .main { display: grid; grid-template-columns: minmax(0, 1fr) 310px; gap: 16px; align-items: start; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+  .map-card { padding: 12px; min-width: 0; }
+  .map-head { display: flex; justify-content: space-between; align-items: baseline; gap: 4px 12px; margin-bottom: 10px; flex-wrap: wrap; }
   .map-head h2 { font-size: 15px; margin: 0; font-weight: 700; }
   .map-head span { font-size: 12px; color: var(--muted); }
-  .map-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 4px; }
+  .map-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; container-type: inline-size; }
   .hall {
-    display: grid; grid-template-columns: 44px 70px auto 68px; gap: 10px;
-    min-width: 680px; background: var(--floor); border-radius: 10px; padding: 12px;
+    display: grid; gap: clamp(6px, 1.4cqi, 10px);
+    grid-template-columns: clamp(26px, 6cqi, 44px) clamp(36px, 9cqi, 70px) minmax(0, 1fr) clamp(46px, 10cqi, 72px);
+    min-width: 520px; background: var(--floor); border-radius: 10px; padding: clamp(8px, 1.6cqi, 12px);
   }
   .stage, .audience, .counter {
     border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
     font-weight: 700; line-height: 1.2;
   }
-  .stage { background: var(--stage); color: var(--ink); font-family: var(--font-display); font-weight: 400; font-size: 20px; gap: 8px; }
+  .stage { background: var(--stage); color: var(--ink); font-family: var(--font-display); font-weight: 400; font-size: clamp(15px, 3cqi, 20px); gap: 8px; }
   .stage small, .audience small, .counter small { font-family: var(--font-body); font-size: 10px; font-weight: 500; opacity: .8; }
-  .audience { border: 2px dashed var(--line); color: var(--muted); font-size: 14px; gap: 10px; padding: 6px; }
-  .audience .v { writing-mode: vertical-rl; letter-spacing: .4em; font-size: 16px; }
+  .audience { border: 2px dashed var(--line); color: var(--muted); gap: 10px; padding: 4px; }
+  .audience .v { writing-mode: vertical-rl; letter-spacing: .4em; font-size: clamp(13px, 2.4cqi, 16px); }
   .counters { display: grid; grid-template-rows: 1fr 1.6fr; gap: 10px; }
-  .counter { background: var(--counter); color: var(--counter-fg); font-size: 12px; padding: 6px; gap: 4px; }
-  .rows { display: grid; gap: 4px; }
-  .zone-label { font-size: 11px; font-weight: 700; text-align: center; letter-spacing: .04em; }
+  .counter { background: var(--counter); color: var(--counter-fg); font-size: clamp(10px, 1.9cqi, 12px); padding: 4px; gap: 4px; }
+  .rows { display: grid; gap: 4px; min-width: 0; }
+  .zone-label { font-size: clamp(10px, 1.8cqi, 12px); font-weight: 700; text-align: center; letter-spacing: .03em; line-height: 1.3; }
   .zone-label.red { color: var(--red); } .zone-label.yellow { color: var(--yellow); }
   .zone-label.blue { color: var(--blue); } .zone-label.green { color: var(--green); }
-  .row { display: grid; grid-template-columns: repeat(9, 52px); gap: 6px; }
-  .gap-s { height: 8px; }
+  .row { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: clamp(4px, 1cqi, 7px); }
+  .gap-s { height: 6px; }
   .booth {
     --c: var(--blue); --cb: var(--blue-bg);
-    width: 52px; height: 52px; border-radius: 8px; border: 2px solid var(--c); background: var(--surface);
-    color: var(--c); cursor: pointer; padding: 0; position: relative;
+    width: 100%; aspect-ratio: 1; border-radius: 7px; border: 2px solid var(--c); background: var(--surface);
+    color: var(--c); cursor: pointer; padding: 0; position: relative; min-width: 0;
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
     transition: transform .15s ease, opacity .15s ease, background-color .15s ease;
   }
@@ -129,73 +115,115 @@
   .booth.yellow { --c: var(--yellow); --cb: var(--yellow-bg); }
   .booth.blue { --c: var(--blue); --cb: var(--blue-bg); }
   .booth.green { --c: var(--green); --cb: var(--green-bg); }
-  .booth .n { font-weight: 900; font-size: 16px; line-height: 1; font-variant-numeric: tabular-nums; }
-  .booth .c { font-family: var(--font-mono); font-size: 9.5px; font-weight: 600; opacity: .85; }
-  .booth:hover { background: var(--cb); transform: scale(1.06); }
-  .booth.sel { background: var(--c); color: var(--surface); transform: scale(1.1); z-index: 2; box-shadow: 0 4px 12px rgba(0,0,0,.18); }
+  .booth .n { font-weight: 900; font-size: clamp(12px, 2.6cqi, 17px); line-height: 1; font-variant-numeric: tabular-nums; }
+  .booth .c { font-family: var(--font-mono); font-size: clamp(8px, 1.5cqi, 10px); font-weight: 600; opacity: .85; line-height: 1.1; }
+  .booth.visited { background: var(--cb); }
+  .booth.sel { background: var(--c); color: #fff; transform: scale(1.08); z-index: 2; box-shadow: 0 4px 12px rgba(20,30,50,.2); }
   .booth.dim { opacity: .18; }
-  .booth.visited::after {
-    content: ""; position: absolute; top: -6px; right: -6px; width: 16px; height: 16px; border-radius: 50%;
-    background: var(--done) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 8.5l2.5 2.5L12 5.5' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/12px no-repeat;
-    border: 2px solid var(--surface);
+  .booth.visited::after, .ck-box.on::before {
+    content: ""; background: var(--done) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 8.5l2.5 2.5L12 5.5' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/70% no-repeat;
+    border-radius: 50%;
   }
-  .slot { width: 52px; height: 52px; }
+  .booth.visited::after { position: absolute; top: -6px; right: -6px; width: 17px; height: 17px; border: 2px solid var(--surface); }
+  .slot { aspect-ratio: 1; }
   .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 10px; font-size: 12px; color: var(--muted); }
   .legend span { display: inline-flex; align-items: center; gap: 6px; }
   .legend i { width: 12px; height: 12px; border-radius: 3px; border: 2px solid; display: inline-block; }
-  .scroll-hint { display: none; font-size: 12px; color: var(--muted); margin-top: 6px; }
-  @media (max-width: 760px) { .scroll-hint { display: block; } }
+  .scroll-hint { display: none; font-size: 12px; color: var(--muted); margin-top: 6px; text-align: center; }
+  @media (max-width: 560px) { .scroll-hint { display: block; } }
 
-  .detail { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); }
-  @media (max-width: 960px) { .detail { position: static; } }
-  .detail .empty { color: var(--muted); font-size: 14px; }
-  .detail .empty b { display: block; color: var(--fg); font-size: 16px; margin-bottom: 4px; }
-  .d-top { display: flex; align-items: center; gap: 12px; }
-  .d-num {
-    width: 54px; height: 54px; border-radius: 12px; flex: none; display: grid; place-items: center;
-    font-size: 24px; font-weight: 900; color: var(--surface); background: var(--c);
+  /* Right panel: stall detail + checklist */
+  .side {
+    display: flex; flex-direction: column; gap: 12px; min-width: 0;
+    position: sticky; top: max(12px, env(safe-area-inset-top, 0px));
+    max-height: calc(100vh - 24px); max-height: calc(100dvh - 24px);
   }
-  .d-meta { font-size: 13px; color: var(--muted); line-height: 1.4; }
+  .detail { padding: 14px; flex: none; --c: var(--ink); }
+  .detail .empty { color: var(--muted); font-size: 13px; line-height: 1.5; }
+  .detail .empty b { display: block; color: var(--fg); font-size: 15px; margin-bottom: 2px; }
+  .d-top { display: flex; align-items: center; gap: 10px; }
+  .d-num { width: 44px; height: 44px; border-radius: 10px; flex: none; display: grid; place-items: center; font-size: 20px; font-weight: 900; color: #fff; background: var(--c); }
+  .d-meta { font-size: 12px; color: var(--muted); line-height: 1.4; min-width: 0; }
   .d-meta .code { font-family: var(--font-mono); font-weight: 600; color: var(--fg); }
-  .d-book { font-family: var(--font-display); font-size: 22px; margin: 14px 0 4px; line-height: 1.3; }
-  .d-act { font-size: 15px; }
+  .d-book { font-family: var(--font-display); font-size: 20px; margin: 10px 0 2px; line-height: 1.3; }
+  .d-act { font-size: 14px; line-height: 1.55; }
   .d-act b { color: var(--c); }
-  .d-actions { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
-  .btn { border-radius: 10px; padding: 8px 14px; font-size: 14px; font-weight: 700; cursor: pointer; border: 1px solid var(--line); background: var(--surface); }
-  .btn.primary { background: var(--ink); color: var(--surface); border-color: var(--ink); }
-  .btn.is-done { background: var(--done); border-color: var(--done); color: var(--surface); }
-  .d-nav { display: flex; justify-content: space-between; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
-  .d-nav button { background: none; border: 0; color: var(--muted); font-size: 13px; cursor: pointer; padding: 4px 0; }
-  .d-nav button:hover { color: var(--ink); }
+  .d-actions { display: grid; grid-template-columns: 44px 1fr 44px; gap: 8px; margin-top: 12px; }
+  .btn { min-height: 44px; border-radius: 10px; padding: 6px 12px; font-size: 14px; font-weight: 700; cursor: pointer; border: 1px solid var(--line); background: var(--surface); }
+  .btn.primary { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .btn.is-done { background: var(--done); border-color: var(--done); color: #fff; }
+  .btn.nav { padding: 0; font-size: 18px; color: var(--muted); }
+  .btn:disabled { opacity: .35; cursor: default; }
+
+  .checklist { flex: 1 1 auto; min-height: 220px; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+  .ck-head {
+    position: sticky; top: 0; z-index: 1; background: var(--surface); border-bottom: 1px solid var(--line);
+    padding: 12px 14px 10px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px;
+  }
+  .ck-head h2 { font-size: 16px; margin: 0; }
+  .ck-head span { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .ck-hint { font-size: 12px; color: var(--muted); padding: 8px 14px 0; }
+  .ck-groups { display: grid; }
+  .ck-zone { padding: 8px 0 4px; }
+  .ck-zone-h { display: flex; justify-content: space-between; padding: 4px 14px; font-size: 12px; font-weight: 700; letter-spacing: .04em; }
+  .ck-zone-h.red { color: var(--red); } .ck-zone-h.yellow { color: var(--yellow); } .ck-zone-h.blue { color: var(--blue); } .ck-zone-h.green { color: var(--green); }
+  .ck-zone-h span { font-variant-numeric: tabular-nums; }
+  .ck-row { --c: var(--blue); display: grid; grid-template-columns: 48px minmax(0, 1fr); align-items: center; min-height: 46px; }
+  .ck-row.red { --c: var(--red); } .ck-row.yellow { --c: var(--yellow); } .ck-row.blue { --c: var(--blue); } .ck-row.green { --c: var(--green); }
+  .ck-row.sel { background: var(--floor); }
+  .ck-box { width: 48px; height: 46px; border: 0; background: none; padding: 0; cursor: pointer; display: grid; place-items: center; position: relative; }
+  .ck-box::after { content: ""; width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--c); grid-area: 1 / 1; }
+  .ck-box.on::before { width: 26px; height: 26px; grid-area: 1 / 1; z-index: 1; }
+  .ck-box.on::after { border-color: var(--done); }
+  .ck-main { border: 0; background: none; text-align: left; cursor: pointer; padding: 6px 12px 6px 0; display: flex; align-items: baseline; gap: 8px; min-width: 0; min-height: 46px; }
+  .ck-main .num { font-weight: 900; color: var(--c); width: 22px; text-align: right; flex: none; font-variant-numeric: tabular-nums; }
+  .ck-main .code { font-family: var(--font-mono); font-size: 12px; color: var(--muted); flex: none; width: 36px; }
+  .ck-main .bk { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; font-size: 14px; }
+  .ck-row.done .bk { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--line); }
+  .ck-foot { padding: 10px 14px 14px; }
+  .link-btn { background: none; border: 0; padding: 6px 0; color: var(--muted); font-size: 13px; text-decoration: underline; cursor: pointer; }
 
   /* Directory */
   .dir-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
   .dir-head h2 { font-size: 18px; margin: 0; }
   .dir-head span { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
-  .dir { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; }
+  .dir { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 290px), 1fr)); gap: 10px; }
   .item {
     --c: var(--blue);
     display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 12px; text-align: left; width: 100%;
     background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px; cursor: pointer;
   }
   .item.red { --c: var(--red); } .item.yellow { --c: var(--yellow); } .item.blue { --c: var(--blue); } .item.green { --c: var(--green); }
-  .item:hover { border-color: var(--c); }
   .item.sel { border-color: var(--c); box-shadow: 0 0 0 2px var(--c) inset; }
-  .item .num { width: 40px; height: 40px; border-radius: 10px; border: 2px solid var(--c); color: var(--c); display: grid; place-items: center; font-weight: 900; font-variant-numeric: tabular-nums; position: relative; }
-  .item.visited .num { background: var(--c); color: var(--surface); }
+  .item .num { width: 40px; height: 40px; border-radius: 10px; border: 2px solid var(--c); color: var(--c); display: grid; place-items: center; font-weight: 900; font-variant-numeric: tabular-nums; }
+  .item.visited .num { background: var(--c); color: #fff; }
   .item .t { font-weight: 700; font-size: 15px; line-height: 1.35; }
   .item .m { font-size: 12px; color: var(--muted); margin-top: 1px; }
   .item .m .code { font-family: var(--font-mono); font-weight: 600; }
   .item .a { font-size: 13px; margin-top: 4px; line-height: 1.5; }
-  .item .a b { font-weight: 700; }
   .none { color: var(--muted); padding: 24px; text-align: center; background: var(--surface); border: 1px dashed var(--line); border-radius: 12px; }
   footer { color: var(--muted); font-size: 12px; }
+
+  @media (hover: hover) {
+    .chip:hover { border-color: var(--ink); }
+    .booth:not(.sel):hover { background: var(--cb); transform: scale(1.05); }
+    .item:hover { border-color: var(--c); }
+    .ck-main:hover .bk { color: var(--ink); }
+  }
+
+  /* iPad portrait and phones: stack the checklist under the map */
+  @media (max-width: 899px) {
+    .main { grid-template-columns: minmax(0, 1fr); }
+    .side { position: static; max-height: none; }
+    .checklist { overflow: visible; min-height: 0; }
+    .ck-head { position: static; }
+    .ck-groups { grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr)); column-gap: 8px; }
+  }
 
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
 </style>
 </head>
 <body>
-
 <div class="wrap">
   <header>
     <div>
@@ -211,7 +239,7 @@
       </svg>
       <div>
         <b id="visitedCount">0</b><span style="color:var(--muted)"> / 36</span>
-        <small>已去过的摊位<br><button class="link-btn" id="resetBtn" type="button">清除记录</button></small>
+        <small>已去过的摊位</small>
       </div>
     </div>
   </header>
@@ -219,7 +247,7 @@
   <div class="controls">
     <label class="search">
       <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg>
-      <input id="q" type="search" placeholder="搜索班级、书名、摊位代码或游戏，例如：投篮、2J、Kahoot" aria-label="搜索摊位">
+      <input id="q" type="search" placeholder="搜索班级、书名、摊位代码或游戏，例如：投篮、2J、Kahoot" aria-label="搜索摊位" autocomplete="off">
     </label>
     <div class="chip-row" id="classChips" role="group" aria-label="按班级筛选"><span class="lbl">班级</span></div>
     <div class="chip-row" id="bookChips" role="group" aria-label="按书籍筛选"><span class="lbl">书籍</span></div>
@@ -232,7 +260,7 @@
   </div>
 
   <div class="main">
-    <section class="map-card" aria-label="礼堂平面图">
+    <section class="card map-card" aria-label="礼堂平面图">
       <div class="map-head">
         <h2>礼堂平面图</h2>
         <span>按顺序走：红区 1→9，黄区 10→19，蓝区 20→27，绿区 28→36</span>
@@ -243,8 +271,8 @@
           <div class="audience"><span class="v">观众席</span><small>Audience</small></div>
           <div class="rows" id="rows"></div>
           <div class="counters">
-            <div class="counter">奖品<br>兑换处<small>Prize redemption</small></div>
-            <div class="counter">问讯处<br>奖品兑换处<small>Info counter</small></div>
+            <div class="counter">奖品<br>兑换处<small>Prize</small></div>
+            <div class="counter">问讯处<br>奖品<br>兑换处<small>Info</small></div>
           </div>
         </div>
       </div>
@@ -257,7 +285,15 @@
       </div>
     </section>
 
-    <aside class="detail" id="detail" aria-live="polite"></aside>
+    <aside class="side">
+      <div class="card detail" id="detail" aria-live="polite"></div>
+      <section class="card checklist" aria-label="打卡清单">
+        <div class="ck-head"><h2>打卡清单</h2><span id="ckCount">0 / 36</span></div>
+        <div class="ck-hint">去过一个摊位，就点左边的圆圈打勾。</div>
+        <div class="ck-groups" id="ckGroups"></div>
+        <div class="ck-foot"><button class="link-btn" id="resetBtn" type="button">清除所有打勾</button></div>
+      </section>
+    </aside>
   </div>
 
   <section style="display:grid;gap:12px">
@@ -265,7 +301,7 @@
     <div class="dir" id="dir"></div>
   </section>
 
-  <footer>资料取自学校的摊位电子地图（最新）页面。“已去过”的记录只保存在你自己的设备上。</footer>
+  <footer>资料取自学校的摊位电子地图（最新）页面。打勾记录只保存在你自己的设备上。</footer>
 </div>
 
 <script>
@@ -308,12 +344,14 @@ const stalls = [
   { id: 36, code: "2W4", cls: "2W", book: "《伤者》", act: "<b>正能量加油站</b>（阅读心得分享与关卡总结打卡）", color: "green" }
 ];
 const zoneName = { red: "红区", yellow: "黄区", blue: "蓝区", green: "绿区" };
+const zoneOrder = ["red", "yellow", "blue", "green"];
 const byId = Object.fromEntries(stalls.map(s => [s.id, s]));
 
-// Floor plan rows, top (far from stage... back of hall) to bottom. Each row is 9 columns; null = empty floor.
+// Floor plan rows from the back of the hall (top) to the front (bottom); 9 columns each, null = empty floor.
 const E = null;
 const layout = [
-  { label: ["green", "绿区 摊位 28–36（36 ← 28）"], at: "top", cells: [36,35,34,33,32,31,30,29,28] },
+  { label: ["green", "绿区 摊位 28–36（36 ← 28）"] },
+  { cells: [36,35,34,33,32,31,30,29,28] },
   { gap: true },
   { cells: [E,E,E,E,E,24,25,26,27] },
   { label: ["blue", "蓝区 摊位 20–27（24 → 27 ／ 23 ← 20）"] },
@@ -335,6 +373,8 @@ let visited = new Set(store.get("rc26-visited", []));
 let state = { q: "", cls: "ALL", book: "ALL", status: "all", sel: null };
 
 const $ = id => document.getElementById(id);
+const stacked = () => window.matchMedia("(max-width: 899px)").matches;
+const plainBook = b => b.replace(/[《》]/g, "");
 
 function buildMap() {
   $("rows").innerHTML = layout.map(r => {
@@ -343,7 +383,7 @@ function buildMap() {
     return `<div class="row">` + r.cells.map(id => {
       if (id === null) return `<div class="slot"></div>`;
       const s = byId[id];
-      return `<button type="button" class="booth ${s.color}" id="b${id}" data-id="${id}" aria-label="摊位 ${id}，${s.code}，${s.book.replace(/[《》]/g, "")}">
+      return `<button type="button" class="booth ${s.color}" id="b${id}" data-id="${id}" aria-label="摊位 ${id}，${s.code}，${plainBook(s.book)}">
         <span class="n">${id}</span><span class="c">${s.code}</span></button>`;
     }).join("") + `</div>`;
   }).join("");
@@ -390,14 +430,34 @@ function render() {
     </button>`).join("") : `<div class="none">没有符合条件的摊位。试试清除搜索或选择“全部”。</div>`;
   $("dirCount").textContent = shown.length === stalls.length ? "共 36 个摊位" : `显示 ${shown.length} / 36 个摊位`;
   $("visitedCount").textContent = visited.size;
+  $("ckCount").textContent = `${visited.size} / 36`;
   $("ring").setAttribute("stroke-dashoffset", (113.1 * (1 - visited.size / 36)).toFixed(1));
+  renderChecklist();
   renderDetail();
+}
+
+function renderChecklist() {
+  $("ckGroups").innerHTML = zoneOrder.map(z => {
+    const list = stalls.filter(s => s.color === z);
+    const done = list.filter(s => visited.has(s.id)).length;
+    return `<div class="ck-zone">
+      <div class="ck-zone-h ${z}">${zoneName[z]}<span>${done} / ${list.length}</span></div>
+      ${list.map(s => {
+        const on = visited.has(s.id);
+        return `<div class="ck-row ${s.color}${on ? " done" : ""}${state.sel === s.id ? " sel" : ""}">
+          <button type="button" class="ck-box${on ? " on" : ""}" data-toggle="${s.id}" aria-pressed="${on}" aria-label="${on ? "取消打勾" : "打勾"}：摊位 ${s.id} ${plainBook(s.book)}"></button>
+          <button type="button" class="ck-main" data-pick="${s.id}"><span class="num">${s.id}</span><span class="code">${s.code}</span><span class="bk">${plainBook(s.book)}</span></button>
+        </div>`;
+      }).join("")}
+    </div>`;
+  }).join("");
 }
 
 function renderDetail() {
   const s = byId[state.sel];
   if (!s) {
-    $("detail").innerHTML = `<div class="empty"><b>点一个摊位看详情</b>在地图或下方列表点任何摊位，就能看到书名、游戏内容，还能标记为“已去过”。</div>`;
+    $("detail").style.removeProperty("--c");
+    $("detail").innerHTML = `<div class="empty"><b>点一个摊位看详情</b>在地图或清单里点任何摊位，就能看到书名和游戏内容。</div>`;
     return;
   }
   const done = visited.has(s.id);
@@ -405,26 +465,27 @@ function renderDetail() {
   $("detail").innerHTML = `
     <div class="d-top">
       <div class="d-num">${s.id}</div>
-      <div class="d-meta">${zoneName[s.color]}<br>摊位代码 <span class="code">${s.code}</span> · 班级 ${s.cls}${s.sub ? "（" + s.sub + "）" : ""}</div>
+      <div class="d-meta">${zoneName[s.color]} · 摊位代码 <span class="code">${s.code}</span><br>班级 ${s.cls}${s.sub ? "（" + s.sub + "）" : ""}</div>
     </div>
     <div class="d-book">${s.book}</div>
     <div class="d-act">${s.act}</div>
     <div class="d-actions">
-      <button type="button" class="btn ${done ? "is-done" : "primary"}" id="toggleVisit">${done ? "✓ 已去过" : "标记为已去过"}</button>
-    </div>
-    <div class="d-nav">
-      <button type="button" id="prev" ${s.id === 1 ? "disabled" : ""}>← 上一个（${s.id === 1 ? "—" : s.id - 1}）</button>
-      <button type="button" id="next" ${s.id === 36 ? "disabled" : ""}>下一个（${s.id === 36 ? "—" : s.id + 1}）→</button>
+      <button type="button" class="btn nav" id="prev" aria-label="上一个摊位" ${s.id === 1 ? "disabled" : ""}>‹</button>
+      <button type="button" class="btn ${done ? "is-done" : "primary"}" data-toggle="${s.id}">${done ? "✓ 已去过" : "标记为已去过"}</button>
+      <button type="button" class="btn nav" id="next" aria-label="下一个摊位" ${s.id === 36 ? "disabled" : ""}>›</button>
     </div>`;
 }
 
-function select(id, scroll) {
+function select(id, reveal) {
   state.sel = id;
   render();
-  if (scroll) {
-    const el = $("i" + id);
-    if (el) el.scrollIntoView({ behavior: "smooth", block: "nearest" });
-  }
+  if (reveal && stacked()) $("detail").scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+function toggleVisit(id) {
+  visited.has(id) ? visited.delete(id) : visited.add(id);
+  store.set("rc26-visited", [...visited]);
+  render();
 }
 
 function setPressed(container, attr, val) {
@@ -432,34 +493,30 @@ function setPressed(container, attr, val) {
 }
 
 document.addEventListener("click", e => {
-  const booth = e.target.closest(".booth");
-  if (booth) return select(+booth.dataset.id, false);
-  const item = e.target.closest(".item");
-  if (item) {
-    select(+item.dataset.id, false);
-    if (window.matchMedia("(max-width: 960px)").matches) $("detail").scrollIntoView({ behavior: "smooth", block: "nearest" });
-    return;
-  }
-  const c = e.target.closest("[data-cls]");
+  const t = e.target;
+  const tog = t.closest("[data-toggle]");
+  if (tog) return toggleVisit(+tog.dataset.toggle);
+  const pick = t.closest("[data-pick]");
+  if (pick) return select(+pick.dataset.pick, true);
+  const booth = t.closest(".booth");
+  if (booth) return select(+booth.dataset.id, true);
+  const item = t.closest(".item");
+  if (item) return select(+item.dataset.id, true);
+  const c = t.closest("[data-cls]");
   if (c) { state.cls = c.dataset.cls; setPressed($("classChips"), "data-cls", state.cls); return render(); }
-  const bk = e.target.closest("[data-book]");
+  const bk = t.closest("[data-book]");
   if (bk) { state.book = bk.dataset.book; setPressed($("bookChips"), "data-book", state.book); return render(); }
-  const st = e.target.closest("[data-status]");
+  const st = t.closest("[data-status]");
   if (st) { state.status = st.dataset.status; setPressed(st.parentElement, "data-status", state.status); return render(); }
-  if (e.target.closest("#toggleVisit")) {
-    visited.has(state.sel) ? visited.delete(state.sel) : visited.add(state.sel);
-    store.set("rc26-visited", [...visited]);
-    return render();
-  }
-  if (e.target.closest("#prev") && state.sel > 1) return select(state.sel - 1, true);
-  if (e.target.closest("#next") && state.sel < 36) return select(state.sel + 1, true);
-  if (e.target.closest("#resetBtn")) {
+  if (t.closest("#prev") && state.sel > 1) return select(state.sel - 1, false);
+  if (t.closest("#next") && state.sel < 36) return select(state.sel + 1, false);
+  if (t.closest("#resetBtn")) {
     const btn = $("resetBtn");
     if (btn.dataset.confirm) {
-      visited.clear(); store.set("rc26-visited", []); delete btn.dataset.confirm; btn.textContent = "清除记录"; render();
+      visited.clear(); store.set("rc26-visited", []); delete btn.dataset.confirm; btn.textContent = "清除所有打勾"; render();
     } else if (visited.size) {
       btn.dataset.confirm = "1"; btn.textContent = "再点一次确认清除";
-      setTimeout(() => { delete btn.dataset.confirm; btn.textContent = "清除记录"; }, 3000);
+      setTimeout(() => { delete btn.dataset.confirm; btn.textContent = "清除所有打勾"; }, 3000);
     }
   }
 });
