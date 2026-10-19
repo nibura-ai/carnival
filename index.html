@@ -1,0 +1,473 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>阅读嘉年华摊位地图</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=ZCOOL+KuaiLe&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+  /* Layout: hall floor plan as the hero (stage on the left, booths in a 9-column grid, counters on the right), stall detail beside it, filterable directory below. */
+  :root {
+    --bg: #f3f5f8;
+    --surface: #ffffff;
+    --floor: #e9edf3;
+    --line: #d3d9e3;
+    --fg: #1b2433;
+    --muted: #5d6879;
+    --ink: #24407a;
+    --ink-soft: #e3e9f6;
+    --red: #d1453b;     --red-bg: #fdecea;
+    --yellow: #b77900;  --yellow-bg: #fff4d6;
+    --blue: #1f6fc4;    --blue-bg: #e4f0fc;
+    --green: #2a8a4a;   --green-bg: #e3f5e8;
+    --stage: #dbe7f7;
+    --counter: #ffe2c4;  --counter-fg: #a74b0f;
+    --done: #2a8a4a;
+    --font-display: "ZCOOL KuaiLe", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+    --font-body: "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #11161f; --surface: #19202c; --floor: #141a24; --line: #2c3545;
+      --fg: #e6ebf3; --muted: #9aa5b6; --ink: #9db8f0; --ink-soft: #243150;
+      --red: #f0776d; --red-bg: #3a1f1d; --yellow: #f0bb4a; --yellow-bg: #3a2e14;
+      --blue: #6eaef0; --blue-bg: #17293f; --green: #6cc98a; --green-bg: #163222;
+      --stage: #1d2b40; --counter: #3d2a19; --counter-fg: #f5b27a; --done: #6cc98a;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #11161f; --surface: #19202c; --floor: #141a24; --line: #2c3545;
+    --fg: #e6ebf3; --muted: #9aa5b6; --ink: #9db8f0; --ink-soft: #243150;
+    --red: #f0776d; --red-bg: #3a1f1d; --yellow: #f0bb4a; --yellow-bg: #3a2e14;
+    --blue: #6eaef0; --blue-bg: #17293f; --green: #6cc98a; --green-bg: #163222;
+    --stage: #1d2b40; --counter: #3d2a19; --counter-fg: #f5b27a; --done: #6cc98a;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg); color: var(--fg);
+    font-family: var(--font-body); font-size: 15px; line-height: 1.6;
+    padding-block: 20px 48px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 20px; }
+  button { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+  /* Header */
+  header { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; }
+  .eyebrow { font-size: 12px; letter-spacing: .08em; color: var(--muted); font-weight: 500; text-transform: uppercase; }
+  h1 { font-family: var(--font-display); font-weight: 400; font-size: clamp(28px, 5vw, 40px); line-height: 1.15; margin: 2px 0 0; text-wrap: balance; color: var(--ink); }
+  .when { color: var(--muted); font-size: 14px; margin-top: 4px; }
+  .progress { display: flex; align-items: center; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; }
+  .progress-ring { width: 44px; height: 44px; flex: none; }
+  .progress b { font-size: 20px; font-variant-numeric: tabular-nums; }
+  .progress small { display: block; color: var(--muted); font-size: 12px; line-height: 1.3; }
+  .link-btn { background: none; border: 0; padding: 0; color: var(--muted); font-size: 12px; text-decoration: underline; cursor: pointer; }
+
+  /* Controls */
+  .controls { display: grid; gap: 10px; }
+  .search { position: relative; }
+  .search input {
+    width: 100%; font: inherit; font-size: 15px; color: var(--fg);
+    background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+    padding: 10px 12px 10px 38px;
+  }
+  .search svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; stroke: var(--muted); fill: none; }
+  .chip-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .chip-row .lbl { font-size: 12px; color: var(--muted); margin-right: 4px; letter-spacing: .04em; }
+  .chip {
+    border: 1px solid var(--line); background: var(--surface); border-radius: 999px;
+    padding: 4px 12px; font-size: 13px; cursor: pointer; white-space: nowrap;
+  }
+  .chip:hover { border-color: var(--ink); }
+  .chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--surface); }
+
+  /* Map + detail */
+  .main { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 20px; align-items: start; }
+  @media (max-width: 960px) { .main { grid-template-columns: minmax(0, 1fr); } }
+  .map-card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; min-width: 0; }
+  .map-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+  .map-head h2 { font-size: 15px; margin: 0; font-weight: 700; }
+  .map-head span { font-size: 12px; color: var(--muted); }
+  .map-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 4px; }
+  .hall {
+    display: grid; grid-template-columns: 44px 70px auto 68px; gap: 10px;
+    min-width: 680px; background: var(--floor); border-radius: 10px; padding: 12px;
+  }
+  .stage, .audience, .counter {
+    border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+    font-weight: 700; line-height: 1.2;
+  }
+  .stage { background: var(--stage); color: var(--ink); font-family: var(--font-display); font-weight: 400; font-size: 20px; gap: 8px; }
+  .stage small, .audience small, .counter small { font-family: var(--font-body); font-size: 10px; font-weight: 500; opacity: .8; }
+  .audience { border: 2px dashed var(--line); color: var(--muted); font-size: 14px; gap: 10px; padding: 6px; }
+  .audience .v { writing-mode: vertical-rl; letter-spacing: .4em; font-size: 16px; }
+  .counters { display: grid; grid-template-rows: 1fr 1.6fr; gap: 10px; }
+  .counter { background: var(--counter); color: var(--counter-fg); font-size: 12px; padding: 6px; gap: 4px; }
+  .rows { display: grid; gap: 4px; }
+  .zone-label { font-size: 11px; font-weight: 700; text-align: center; letter-spacing: .04em; }
+  .zone-label.red { color: var(--red); } .zone-label.yellow { color: var(--yellow); }
+  .zone-label.blue { color: var(--blue); } .zone-label.green { color: var(--green); }
+  .row { display: grid; grid-template-columns: repeat(9, 52px); gap: 6px; }
+  .gap-s { height: 8px; }
+  .booth {
+    --c: var(--blue); --cb: var(--blue-bg);
+    width: 52px; height: 52px; border-radius: 8px; border: 2px solid var(--c); background: var(--surface);
+    color: var(--c); cursor: pointer; padding: 0; position: relative;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+    transition: transform .15s ease, opacity .15s ease, background-color .15s ease;
+  }
+  .booth.red { --c: var(--red); --cb: var(--red-bg); }
+  .booth.yellow { --c: var(--yellow); --cb: var(--yellow-bg); }
+  .booth.blue { --c: var(--blue); --cb: var(--blue-bg); }
+  .booth.green { --c: var(--green); --cb: var(--green-bg); }
+  .booth .n { font-weight: 900; font-size: 16px; line-height: 1; font-variant-numeric: tabular-nums; }
+  .booth .c { font-family: var(--font-mono); font-size: 9.5px; font-weight: 600; opacity: .85; }
+  .booth:hover { background: var(--cb); transform: scale(1.06); }
+  .booth.sel { background: var(--c); color: var(--surface); transform: scale(1.1); z-index: 2; box-shadow: 0 4px 12px rgba(0,0,0,.18); }
+  .booth.dim { opacity: .18; }
+  .booth.visited::after {
+    content: ""; position: absolute; top: -6px; right: -6px; width: 16px; height: 16px; border-radius: 50%;
+    background: var(--done) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 8.5l2.5 2.5L12 5.5' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/12px no-repeat;
+    border: 2px solid var(--surface);
+  }
+  .slot { width: 52px; height: 52px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 10px; font-size: 12px; color: var(--muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend i { width: 12px; height: 12px; border-radius: 3px; border: 2px solid; display: inline-block; }
+  .scroll-hint { display: none; font-size: 12px; color: var(--muted); margin-top: 6px; }
+  @media (max-width: 760px) { .scroll-hint { display: block; } }
+
+  .detail { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); }
+  @media (max-width: 960px) { .detail { position: static; } }
+  .detail .empty { color: var(--muted); font-size: 14px; }
+  .detail .empty b { display: block; color: var(--fg); font-size: 16px; margin-bottom: 4px; }
+  .d-top { display: flex; align-items: center; gap: 12px; }
+  .d-num {
+    width: 54px; height: 54px; border-radius: 12px; flex: none; display: grid; place-items: center;
+    font-size: 24px; font-weight: 900; color: var(--surface); background: var(--c);
+  }
+  .d-meta { font-size: 13px; color: var(--muted); line-height: 1.4; }
+  .d-meta .code { font-family: var(--font-mono); font-weight: 600; color: var(--fg); }
+  .d-book { font-family: var(--font-display); font-size: 22px; margin: 14px 0 4px; line-height: 1.3; }
+  .d-act { font-size: 15px; }
+  .d-act b { color: var(--c); }
+  .d-actions { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+  .btn { border-radius: 10px; padding: 8px 14px; font-size: 14px; font-weight: 700; cursor: pointer; border: 1px solid var(--line); background: var(--surface); }
+  .btn.primary { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+  .btn.is-done { background: var(--done); border-color: var(--done); color: var(--surface); }
+  .d-nav { display: flex; justify-content: space-between; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+  .d-nav button { background: none; border: 0; color: var(--muted); font-size: 13px; cursor: pointer; padding: 4px 0; }
+  .d-nav button:hover { color: var(--ink); }
+
+  /* Directory */
+  .dir-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .dir-head h2 { font-size: 18px; margin: 0; }
+  .dir-head span { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+  .dir { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; }
+  .item {
+    --c: var(--blue);
+    display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 12px; text-align: left; width: 100%;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px; cursor: pointer;
+  }
+  .item.red { --c: var(--red); } .item.yellow { --c: var(--yellow); } .item.blue { --c: var(--blue); } .item.green { --c: var(--green); }
+  .item:hover { border-color: var(--c); }
+  .item.sel { border-color: var(--c); box-shadow: 0 0 0 2px var(--c) inset; }
+  .item .num { width: 40px; height: 40px; border-radius: 10px; border: 2px solid var(--c); color: var(--c); display: grid; place-items: center; font-weight: 900; font-variant-numeric: tabular-nums; position: relative; }
+  .item.visited .num { background: var(--c); color: var(--surface); }
+  .item .t { font-weight: 700; font-size: 15px; line-height: 1.35; }
+  .item .m { font-size: 12px; color: var(--muted); margin-top: 1px; }
+  .item .m .code { font-family: var(--font-mono); font-weight: 600; }
+  .item .a { font-size: 13px; margin-top: 4px; line-height: 1.5; }
+  .item .a b { font-weight: 700; }
+  .none { color: var(--muted); padding: 24px; text-align: center; background: var(--surface); border: 1px dashed var(--line); border-radius: 12px; }
+  footer { color: var(--muted); font-size: 12px; }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">2026 阅读嘉年华 · 中二</div>
+      <h1>摊位地图</h1>
+      <div class="when">20 Oct (Tue) · 8am – 1.30pm · School Hall 礼堂</div>
+    </div>
+    <div class="progress" aria-live="polite">
+      <svg class="progress-ring" viewBox="0 0 44 44" aria-hidden="true">
+        <circle cx="22" cy="22" r="18" fill="none" stroke="var(--line)" stroke-width="5"></circle>
+        <circle id="ring" cx="22" cy="22" r="18" fill="none" stroke="var(--done)" stroke-width="5" stroke-linecap="round"
+                stroke-dasharray="113.1" stroke-dashoffset="113.1" transform="rotate(-90 22 22)"></circle>
+      </svg>
+      <div>
+        <b id="visitedCount">0</b><span style="color:var(--muted)"> / 36</span>
+        <small>已去过的摊位<br><button class="link-btn" id="resetBtn" type="button">清除记录</button></small>
+      </div>
+    </div>
+  </header>
+
+  <div class="controls">
+    <label class="search">
+      <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg>
+      <input id="q" type="search" placeholder="搜索班级、书名、摊位代码或游戏，例如：投篮、2J、Kahoot" aria-label="搜索摊位">
+    </label>
+    <div class="chip-row" id="classChips" role="group" aria-label="按班级筛选"><span class="lbl">班级</span></div>
+    <div class="chip-row" id="bookChips" role="group" aria-label="按书籍筛选"><span class="lbl">书籍</span></div>
+    <div class="chip-row" role="group" aria-label="按状态筛选">
+      <span class="lbl">状态</span>
+      <button class="chip" type="button" data-status="all" aria-pressed="true">全部</button>
+      <button class="chip" type="button" data-status="todo" aria-pressed="false">还没去</button>
+      <button class="chip" type="button" data-status="done" aria-pressed="false">已去过</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <section class="map-card" aria-label="礼堂平面图">
+      <div class="map-head">
+        <h2>礼堂平面图</h2>
+        <span>按顺序走：红区 1→9，黄区 10→19，蓝区 20→27，绿区 28→36</span>
+      </div>
+      <div class="map-scroll">
+        <div class="hall">
+          <div class="stage">舞<br>台<small>Stage</small></div>
+          <div class="audience"><span class="v">观众席</span><small>Audience</small></div>
+          <div class="rows" id="rows"></div>
+          <div class="counters">
+            <div class="counter">奖品<br>兑换处<small>Prize redemption</small></div>
+            <div class="counter">问讯处<br>奖品兑换处<small>Info counter</small></div>
+          </div>
+        </div>
+      </div>
+      <div class="scroll-hint">← 左右滑动查看整个礼堂 →</div>
+      <div class="legend">
+        <span><i style="border-color:var(--red)"></i>红区 1–9</span>
+        <span><i style="border-color:var(--yellow)"></i>黄区 10–19</span>
+        <span><i style="border-color:var(--blue)"></i>蓝区 20–27</span>
+        <span><i style="border-color:var(--green)"></i>绿区 28–36</span>
+      </div>
+    </section>
+
+    <aside class="detail" id="detail" aria-live="polite"></aside>
+  </div>
+
+  <section style="display:grid;gap:12px">
+    <div class="dir-head"><h2>摊位一览</h2><span id="dirCount"></span></div>
+    <div class="dir" id="dir"></div>
+  </section>
+
+  <footer>资料取自学校的摊位电子地图（最新）页面。“已去过”的记录只保存在你自己的设备上。</footer>
+</div>
+
+<script>
+const stalls = [
+  { id: 1, code: "2C1", cls: "2C", book: "《篮球小子》", act: "<b>看线索，猜答案</b>（根据线索卡推理猜出故事角色与情节）", color: "red" },
+  { id: 2, code: "2C2", cls: "2C", book: "《篮球小子》", act: "<b>答题投篮</b>（回答故事相关问题并挑战投篮积分）", color: "red" },
+  { id: 3, code: "2C3", cls: "2C", book: "《面包特工队》", act: "<b>特工解谜大挑战</b>（角色配对、寻找线索与密码通关）", color: "red" },
+  { id: 4, code: "2D1", cls: "2D", book: "《请问你要去哪里》", act: "<b>模拟司机</b>（模拟驾驶情境，沟通与应答乘客需求）", color: "red" },
+  { id: 5, code: "2D2", cls: "2D", book: "《请问你要去哪里》", act: "<b>最佳路线</b>（利用简易地图在限定时间内规划快捷路线）", color: "red" },
+  { id: 6, code: "2D3", cls: "2D", book: "《你的世界我们懂》", act: "<b>认识与误解</b>（使用磁性钓竿抽取判断卡，讲解并破除自闭症误解）", color: "red" },
+  { id: 7, code: "2D4", cls: "2D", book: "《你的世界我们懂》", act: "<b>我该怎么做</b>（抽取特定情境卡，选择最合适同理心回应）", color: "red" },
+  { id: 8, code: "2F1", cls: "2F", book: "《面包特工队》", act: "<b>学习做面包</b>（小组推断制作步骤，按序号陈述接力完成）", color: "red" },
+  { id: 9, code: "2F2", cls: "2F", book: "《面包特工队》", act: "<b>记忆游戏</b>（1分钟快速记忆，使用磁铁鱼竿在棋盘配对）", color: "red" },
+  { id: 10, code: "2F3", cls: "2F", book: "《请问你要去哪里》", act: "<b>杯式乒乓球</b>（投乒乓球入杯作答选择题积分）", color: "yellow" },
+  { id: 11, code: "2F4", cls: "2F", book: "《请问你要去哪里》", act: "<b>猜猜乘客是谁？</b>（通过无声肢体表演猜测特定乘客身份）", color: "yellow" },
+  { id: 12, code: "2G1", cls: "2G", book: "《安妮与汪仔》", act: "<b>Kahoot 互动问答</b>（通过平板参与全员故事知识竞赛）", color: "yellow" },
+  { id: 13, code: "2G2", cls: "2G", book: "《安妮与汪仔》", act: "<b>词语游戏</b>（趣味词语配对与华文词汇挑战关卡）", color: "yellow" },
+  { id: 14, code: "2J1", cls: "2J", book: "《伤者》", act: "<b>画图猜词</b>（通过画图演绎故事词语与情节猜测）", color: "yellow" },
+  { id: 15, code: "2J2", cls: "2J", book: "《伤者》", act: "<b>“狼人杀”情境演绎</b>（角色扮演与真假身份推断推理）", color: "yellow" },
+  { id: 16, code: "2J3", cls: "2J", book: "《零零的游戏》", act: "<b>记忆挑战</b>（30秒内快速记忆 15 张故事卡片内容）", color: "yellow" },
+  { id: 17, code: "2J4", cls: "2J", book: "《零零的游戏》", act: "<b>叠杯子挑战</b>（在 1 分 15 秒内全员完成叠杯拯救林纯花）", color: "yellow" },
+  { id: 18, code: "2J5", cls: "2J", book: "《零零的游戏》", act: "<b>AI vs 真实分辨</b>（辨别 AI 生成照片宣导网络安全）", color: "yellow" },
+  { id: 19, code: "2CL1", cls: "2CL", sub: "2CDF", book: "《你的世界我们懂》", act: "<b>Kahoot 知识问答</b>（深入探讨故事主题与人物心理）", color: "yellow" },
+  { id: 20, code: "2CL2", cls: "2CL", sub: "2CDF", book: "《岁月无声》", act: "<b>卡牌游戏</b>（故事情节推理与剧情互动卡牌关卡）", color: "blue" },
+  { id: 21, code: "2CL3", cls: "2CL", sub: "2GJ", book: "《安妮与汪仔》", act: "<b>Kahoot / Blooket 极速挑战</b>（趣味故事竞赛与词汇巩固）", color: "blue" },
+  { id: 22, code: "2P1", cls: "2P", book: "《安妮与汪仔》", act: "<b>听故事，做选择</b>（角色扮演与改正错别字关卡）", color: "blue" },
+  { id: 23, code: "2P2", cls: "2P", book: "《安妮与汪仔》", act: "<b>词语接龙 &amp; 情感联络站</b>（文字接龙体验与阅读心得交流）", color: "blue" },
+  { id: 24, code: "2P3", cls: "2P", book: "《安妮与汪仔》", act: "<b>快来领奖</b>（通关打卡与专属阅读纪念品兑换）", color: "blue" },
+  { id: 25, code: "2T1", cls: "2T", book: "《篮球小子》", act: "<b>打篮球技能关</b>（锯齿形排队答题与传球组合练习）", color: "blue" },
+  { id: 26, code: "2T2", cls: "2T", book: "《篮球小子》", act: "<b>投篮竞赛</b>（投篮命中后根据难度解答故事问题）", color: "blue" },
+  { id: 27, code: "2T3", cls: "2T", book: "《零零的游戏》", act: "<b>机器人工作坊</b>（发挥想象力在麻将纸上设计未来机器人）", color: "blue" },
+  { id: 28, code: "2T4", cls: "2T", book: "《零零的游戏》", act: "<b>机器杀挑战</b>（结合机器人情境的对抗策略游戏）", color: "green" },
+  { id: 29, code: "2U1", cls: "2U", book: "《小轩的折叠世界》", act: "<b>关卡1</b>：现实 vs 折叠世界判断 ｜ <b>关卡2</b>：折叠世界迷宫大冒险", color: "green" },
+  { id: 30, code: "2U2", cls: "2U", book: "《小轩的折叠世界》", act: "<b>关卡1</b>：投球杯子答题 ｜ <b>关卡2</b>：神秘盒子物品猜测", color: "green" },
+  { id: 31, code: "2U3", cls: "2U", book: "《小轩的折叠世界》", act: "<b>折叠世界创客关</b>（动手制作与故事解谜互动）", color: "green" },
+  { id: 32, code: "2U4", cls: "2U", book: "《小轩的折叠世界》", act: "<b>终极考验关</b>（综合情境思考与华文表达卡）", color: "green" },
+  { id: 33, code: "2W1", cls: "2W", book: "《岁月无声》", act: "<b>岁月回忆关</b>（故事名言与历史背景故事配对）", color: "green" },
+  { id: 34, code: "2W2", cls: "2W", book: "《岁月无声》", act: "<b>无声探秘关</b>（手势默剧互动与故事线索推理）", color: "green" },
+  { id: 35, code: "2W3", cls: "2W", book: "《伤者》", act: "<b>心灵疗愈关</b>（角色情境同理心问题解答）", color: "green" },
+  { id: 36, code: "2W4", cls: "2W", book: "《伤者》", act: "<b>正能量加油站</b>（阅读心得分享与关卡总结打卡）", color: "green" }
+];
+const zoneName = { red: "红区", yellow: "黄区", blue: "蓝区", green: "绿区" };
+const byId = Object.fromEntries(stalls.map(s => [s.id, s]));
+
+// Floor plan rows, top (far from stage... back of hall) to bottom. Each row is 9 columns; null = empty floor.
+const E = null;
+const layout = [
+  { label: ["green", "绿区 摊位 28–36（36 ← 28）"], at: "top", cells: [36,35,34,33,32,31,30,29,28] },
+  { gap: true },
+  { cells: [E,E,E,E,E,24,25,26,27] },
+  { label: ["blue", "蓝区 摊位 20–27（24 → 27 ／ 23 ← 20）"] },
+  { cells: [E,E,E,E,E,23,22,21,20] },
+  { gap: true },
+  { cells: [E,E,E,E,15,16,17,18,19] },
+  { label: ["yellow", "黄区 摊位 10–19（15 → 19 ／ 14 ← 10）"] },
+  { cells: [E,E,E,E,14,13,12,11,10] },
+  { gap: true },
+  { cells: [1,2,3,4,5,6,7,8,9] },
+  { label: ["red", "红区 摊位 1–9（1 → 9）"] }
+];
+
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+};
+let visited = new Set(store.get("rc26-visited", []));
+let state = { q: "", cls: "ALL", book: "ALL", status: "all", sel: null };
+
+const $ = id => document.getElementById(id);
+
+function buildMap() {
+  $("rows").innerHTML = layout.map(r => {
+    if (r.gap) return `<div class="gap-s"></div>`;
+    if (r.label) return `<div class="zone-label ${r.label[0]}">${r.label[1]}</div>`;
+    return `<div class="row">` + r.cells.map(id => {
+      if (id === null) return `<div class="slot"></div>`;
+      const s = byId[id];
+      return `<button type="button" class="booth ${s.color}" id="b${id}" data-id="${id}" aria-label="摊位 ${id}，${s.code}，${s.book.replace(/[《》]/g, "")}">
+        <span class="n">${id}</span><span class="c">${s.code}</span></button>`;
+    }).join("") + `</div>`;
+  }).join("");
+}
+
+function buildChips() {
+  const classes = ["ALL", "2C", "2D", "2F", "2G", "2J", "2P", "2T", "2U", "2W", "2CL"];
+  $("classChips").insertAdjacentHTML("beforeend", classes.map(c =>
+    `<button class="chip" type="button" data-cls="${c}" aria-pressed="${c === "ALL"}">${c === "ALL" ? "全部" : c === "2CL" ? "华文 2CL" : c}</button>`).join(""));
+  const books = ["ALL", ...new Set(stalls.map(s => s.book))];
+  $("bookChips").insertAdjacentHTML("beforeend", books.map(b =>
+    `<button class="chip" type="button" data-book="${b}" aria-pressed="${b === "ALL"}">${b === "ALL" ? "全部" : b}</button>`).join(""));
+}
+
+function matches(s) {
+  if (state.cls !== "ALL" && s.cls !== state.cls) return false;
+  if (state.book !== "ALL" && s.book !== state.book) return false;
+  if (state.status === "todo" && visited.has(s.id)) return false;
+  if (state.status === "done" && !visited.has(s.id)) return false;
+  if (state.q) {
+    const hay = [s.id, s.code, s.cls, s.sub || "", s.book, s.act.replace(/<[^>]+>/g, ""), zoneName[s.color]].join(" ").toLowerCase();
+    if (!state.q.split(/\s+/).every(t => hay.includes(t))) return false;
+  }
+  return true;
+}
+
+function render() {
+  const shown = stalls.filter(matches);
+  const shownIds = new Set(shown.map(s => s.id));
+  stalls.forEach(s => {
+    const b = $("b" + s.id);
+    b.classList.toggle("dim", !shownIds.has(s.id));
+    b.classList.toggle("visited", visited.has(s.id));
+    b.classList.toggle("sel", state.sel === s.id);
+  });
+  $("dir").innerHTML = shown.length ? shown.map(s => `
+    <button type="button" class="item ${s.color}${visited.has(s.id) ? " visited" : ""}${state.sel === s.id ? " sel" : ""}" data-id="${s.id}" id="i${s.id}">
+      <span class="num">${s.id}</span>
+      <span>
+        <div class="t">${s.book}</div>
+        <div class="m">${zoneName[s.color]} · <span class="code">${s.code}</span> · ${s.cls}${s.sub ? "（" + s.sub + "）" : ""}${visited.has(s.id) ? " · 已去过" : ""}</div>
+        <div class="a">${s.act}</div>
+      </span>
+    </button>`).join("") : `<div class="none">没有符合条件的摊位。试试清除搜索或选择“全部”。</div>`;
+  $("dirCount").textContent = shown.length === stalls.length ? "共 36 个摊位" : `显示 ${shown.length} / 36 个摊位`;
+  $("visitedCount").textContent = visited.size;
+  $("ring").setAttribute("stroke-dashoffset", (113.1 * (1 - visited.size / 36)).toFixed(1));
+  renderDetail();
+}
+
+function renderDetail() {
+  const s = byId[state.sel];
+  if (!s) {
+    $("detail").innerHTML = `<div class="empty"><b>点一个摊位看详情</b>在地图或下方列表点任何摊位，就能看到书名、游戏内容，还能标记为“已去过”。</div>`;
+    return;
+  }
+  const done = visited.has(s.id);
+  $("detail").style.setProperty("--c", `var(--${s.color})`);
+  $("detail").innerHTML = `
+    <div class="d-top">
+      <div class="d-num">${s.id}</div>
+      <div class="d-meta">${zoneName[s.color]}<br>摊位代码 <span class="code">${s.code}</span> · 班级 ${s.cls}${s.sub ? "（" + s.sub + "）" : ""}</div>
+    </div>
+    <div class="d-book">${s.book}</div>
+    <div class="d-act">${s.act}</div>
+    <div class="d-actions">
+      <button type="button" class="btn ${done ? "is-done" : "primary"}" id="toggleVisit">${done ? "✓ 已去过" : "标记为已去过"}</button>
+    </div>
+    <div class="d-nav">
+      <button type="button" id="prev" ${s.id === 1 ? "disabled" : ""}>← 上一个（${s.id === 1 ? "—" : s.id - 1}）</button>
+      <button type="button" id="next" ${s.id === 36 ? "disabled" : ""}>下一个（${s.id === 36 ? "—" : s.id + 1}）→</button>
+    </div>`;
+}
+
+function select(id, scroll) {
+  state.sel = id;
+  render();
+  if (scroll) {
+    const el = $("i" + id);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+}
+
+function setPressed(container, attr, val) {
+  container.querySelectorAll(`[${attr}]`).forEach(b => b.setAttribute("aria-pressed", String(b.getAttribute(attr) === val)));
+}
+
+document.addEventListener("click", e => {
+  const booth = e.target.closest(".booth");
+  if (booth) return select(+booth.dataset.id, false);
+  const item = e.target.closest(".item");
+  if (item) {
+    select(+item.dataset.id, false);
+    if (window.matchMedia("(max-width: 960px)").matches) $("detail").scrollIntoView({ behavior: "smooth", block: "nearest" });
+    return;
+  }
+  const c = e.target.closest("[data-cls]");
+  if (c) { state.cls = c.dataset.cls; setPressed($("classChips"), "data-cls", state.cls); return render(); }
+  const bk = e.target.closest("[data-book]");
+  if (bk) { state.book = bk.dataset.book; setPressed($("bookChips"), "data-book", state.book); return render(); }
+  const st = e.target.closest("[data-status]");
+  if (st) { state.status = st.dataset.status; setPressed(st.parentElement, "data-status", state.status); return render(); }
+  if (e.target.closest("#toggleVisit")) {
+    visited.has(state.sel) ? visited.delete(state.sel) : visited.add(state.sel);
+    store.set("rc26-visited", [...visited]);
+    return render();
+  }
+  if (e.target.closest("#prev") && state.sel > 1) return select(state.sel - 1, true);
+  if (e.target.closest("#next") && state.sel < 36) return select(state.sel + 1, true);
+  if (e.target.closest("#resetBtn")) {
+    const btn = $("resetBtn");
+    if (btn.dataset.confirm) {
+      visited.clear(); store.set("rc26-visited", []); delete btn.dataset.confirm; btn.textContent = "清除记录"; render();
+    } else if (visited.size) {
+      btn.dataset.confirm = "1"; btn.textContent = "再点一次确认清除";
+      setTimeout(() => { delete btn.dataset.confirm; btn.textContent = "清除记录"; }, 3000);
+    }
+  }
+});
+$("q").addEventListener("input", e => { state.q = e.target.value.toLowerCase().trim(); render(); });
+
+buildMap();
+buildChips();
+render();
+</script>
+</body>
+</html>
